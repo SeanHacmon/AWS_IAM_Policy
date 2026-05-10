@@ -1,0 +1,368 @@
+{
+  "summary": {
+    "total": 6,
+    "correct": 6,
+    "agreement_rate": "100.0%",
+    "avg_time_seconds": 1.26,
+    "total_time_seconds": 7.54
+  },
+  "results": [
+    {
+      "policy": "gcp_policies/gcp_weak_1.json",
+      "description": "Owner role granted to allUsers",
+      "expected": "WEAK",
+      "got": "WEAK",
+      "score": 10,
+      "findings": [
+        "[GCP Policy] Translated from GCP IAM bindings format",
+        "[GCP Binding] role='roles/owner' members=['allUsers']",
+        "Action wildcard '*' found \u2014 grants all actions on all services",
+        "Resource wildcard '*' found \u2014 applies to all AWS resources",
+        "CRITICAL: Action '*' with Resource '*' \u2014 full unrestricted access",
+        "Allow statement has no Condition block \u2014 consider adding MFA or IP restrictions",
+        "No explicit Deny statements \u2014 consider adding Deny rules for sensitive operations",
+        "Principal '*' \u2014 allows any entity including anonymous internet users to assume this role",
+        "Potential for lateral movement and privilege escalation due to overly permissive policy",
+        "Lack of audit and logging capabilities to monitor and detect unauthorized access"
+      ],
+      "fixed_policy": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Principal": {
+              "AWS": "arn:aws:iam::123456789012:root"
+            },
+            "Action": [
+              "ec2:DescribeInstances",
+              "s3:GetObject",
+              "s3:ListBucket"
+            ],
+            "Resource": [
+              "arn:aws:ec2:us-east-1:123456789012:instance/*",
+              "arn:aws:s3:::my-bucket",
+              "arn:aws:s3:::my-bucket/*"
+            ],
+            "Condition": {
+              "Bool": {
+                "aws:MultiFactorAuthPresent": "true"
+              },
+              "IpAddress": {
+                "aws:SourceIp": "192.0.2.0/24"
+              }
+            }
+          },
+          {
+            "Effect": "Deny",
+            "Principal": {
+              "AWS": "arn:aws:iam::123456789012:root"
+            },
+            "Action": [
+              "iam:CreateUser",
+              "iam:CreateRole",
+              "iam:CreatePolicy"
+            ],
+            "Resource": "*",
+            "Condition": {
+              "IpAddress": {
+                "aws:SourceIp": "192.0.2.0/24"
+              }
+            }
+          },
+          {
+            "Effect": "Allow",
+            "Principal": {
+              "AWS": "arn:aws:iam::123456789012:root"
+            },
+            "Action": [
+              "cloudwatch:PutMetricData",
+              "cloudwatch:PutLogEvents"
+            ],
+            "Resource": "*",
+            "Condition": {
+              "Bool": {
+                "aws:MultiFactorAuthPresent": "true"
+              },
+              "IpAddress": {
+                "aws:SourceIp": "192.0.2.0/24"
+              }
+            }
+          }
+        ]
+      },
+      "match": true,
+      "time": 1.8
+    },
+    {
+      "policy": "gcp_policies/gcp_weak_2.json",
+      "description": "Editor role on allAuthenticatedUsers",
+      "expected": "WEAK",
+      "got": "WEAK",
+      "score": 10,
+      "findings": [
+        "[GCP Policy] Translated from GCP IAM bindings format",
+        "[GCP Binding] role='roles/editor' members=['allAuthenticatedUsers']",
+        "Action wildcard '*' found \u2014 grants all actions on all services",
+        "Resource wildcard '*' found \u2014 applies to all AWS resources",
+        "CRITICAL: Action '*' with Resource '*' \u2014 full unrestricted access",
+        "Allow statement has no Condition block \u2014 consider adding MFA or IP restrictions",
+        "No explicit Deny statements \u2014 consider adding Deny rules for sensitive operations",
+        "Principal '*' \u2014 allows any entity including anonymous internet users to assume this role",
+        "Potential for lateral movement and privilege escalation due to overly permissive policy",
+        "Lack of audit and logging capabilities to monitor and detect unauthorized access"
+      ],
+      "fixed_policy": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Principal": {
+              "AWS": "arn:aws:iam::123456789012:root"
+            },
+            "Action": [
+              "ec2:DescribeInstances",
+              "ec2:DescribeSecurityGroups",
+              "iam:ListRoles",
+              "iam:ListUsers",
+              "iam:ListGroups"
+            ],
+            "Resource": "*",
+            "Condition": {
+              "IpAddress": {
+                "aws:SourceIp": "192.0.2.0/24"
+              },
+              "Bool": {
+                "aws:MultiFactorAuthPresent": "true"
+              }
+            }
+          },
+          {
+            "Effect": "Deny",
+            "Principal": {
+              "AWS": "arn:aws:iam::123456789012:root"
+            },
+            "Action": [
+              "iam:CreateUser",
+              "iam:CreateRole",
+              "iam:AttachRolePolicy",
+              "iam:DeleteRole",
+              "iam:DeleteUser"
+            ],
+            "Resource": "*",
+            "Condition": {
+              "IpAddress": {
+                "aws:SourceIp": "192.0.2.0/24"
+              },
+              "Bool": {
+                "aws:MultiFactorAuthPresent": "false"
+              }
+            }
+          },
+          {
+            "Effect": "Allow",
+            "Principal": {
+              "AWS": "arn:aws:iam::123456789012:root"
+            },
+            "Action": [
+              "cloudwatch:PutMetricData",
+              "cloudwatch:PutLogEvents",
+              "cloudwatch:CreateLogGroup",
+              "cloudwatch:CreateLogStream"
+            ],
+            "Resource": "arn:aws:cloudwatch:*:123456789012:*",
+            "Condition": {
+              "IpAddress": {
+                "aws:SourceIp": "192.0.2.0/24"
+              },
+              "Bool": {
+                "aws:MultiFactorAuthPresent": "true"
+              }
+            }
+          }
+        ]
+      },
+      "match": true,
+      "time": 1.45
+    },
+    {
+      "policy": "gcp_policies/gcp_weak_3.json",
+      "description": "Storage admin granted to allUsers",
+      "expected": "WEAK",
+      "got": "WEAK",
+      "score": 10,
+      "findings": [
+        "[GCP Policy] Translated from GCP IAM bindings format",
+        "[GCP Binding] role='roles/storage.admin' members=['allUsers']",
+        "Resource wildcard '*' found \u2014 applies to all AWS resources",
+        "Allow statement has no Condition block \u2014 consider adding MFA or IP restrictions",
+        "Service wildcard 's3:*' \u2014 grants all actions for this service",
+        "No explicit Deny statements \u2014 consider adding Deny rules for sensitive operations",
+        "Principal '*' \u2014 allows any entity including anonymous internet users to assume this role",
+        "Potential for data exfiltration due to unrestricted S3 access",
+        "Lack of resource-specific permissions, which could lead to unintended access"
+      ],
+      "fixed_policy": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Principal": {
+              "AWS": "arn:aws:iam::123456789012:root"
+            },
+            "Action": [
+              "s3:GetObject",
+              "s3:PutObject",
+              "s3:ListBucket"
+            ],
+            "Resource": [
+              "arn:aws:s3:::my-bucket",
+              "arn:aws:s3:::my-bucket/*"
+            ],
+            "Condition": {
+              "IpAddress": {
+                "aws:SourceIp": "192.0.2.0/24"
+              },
+              "Bool": {
+                "aws:MultiFactorAuthPresent": "true"
+              }
+            }
+          },
+          {
+            "Effect": "Deny",
+            "Principal": {
+              "AWS": "arn:aws:iam::123456789012:root"
+            },
+            "Action": [
+              "s3:DeleteBucket",
+              "s3:DeleteObject"
+            ],
+            "Resource": [
+              "arn:aws:s3:::my-bucket",
+              "arn:aws:s3:::my-bucket/*"
+            ],
+            "Condition": {
+              "IpAddress": {
+                "aws:SourceIp": "192.0.2.0/24"
+              },
+              "Bool": {
+                "aws:MultiFactorAuthPresent": "false"
+              }
+            }
+          }
+        ]
+      },
+      "match": true,
+      "time": 1.51
+    },
+    {
+      "policy": "gcp_policies/gcp_strong_1.json",
+      "description": "Storage objectViewer for specific user",
+      "expected": "STRONG",
+      "got": "STRONG",
+      "score": 3,
+      "findings": [
+        "[GCP Policy] Translated from GCP IAM bindings format",
+        "[GCP Binding] role='roles/storage.objectViewer' members=['user:alice@example.com'] condition='resource.name.startsWith('projects/my-project')'",
+        "Broad S3 resource 'arn:aws:s3:::*' \u2014 applies to all buckets",
+        "No explicit Deny statements \u2014 consider adding Deny rules for sensitive operations",
+        "Unrestricted principal with wildcard (*) in the AWS account ID",
+        "Unused or irrelevant condition '_gcp_condition' from a different cloud provider (GCP)"
+      ],
+      "fixed_policy": null,
+      "match": true,
+      "time": 0.41
+    },
+    {
+      "policy": "gcp_policies/gcp_strong_2.json",
+      "description": "Pub/Sub subscriber for specific service account",
+      "expected": "STRONG",
+      "got": "STRONG",
+      "score": 4,
+      "findings": [
+        "[GCP Policy] Translated from GCP IAM bindings format",
+        "[GCP Binding] role='roles/pubsub.subscriber' members=['serviceAccount:my-app@my-project.iam.gserviceaccount.com']",
+        "Allow statement has no Condition block \u2014 consider adding MFA or IP restrictions",
+        "Broad resource pattern 'arn:aws:sqs:*:*:*' \u2014 consider restricting to specific resources",
+        "No explicit Deny statements \u2014 consider adding Deny rules for sensitive operations",
+        "Principal is based on a wildcard (*) which could lead to unintended access",
+        "No expiration or rotation policy for the role"
+      ],
+      "fixed_policy": null,
+      "match": true,
+      "time": 0.51
+    },
+    {
+      "policy": "gcp_policies/gcp_edge_1.json",
+      "description": "IAM serviceAccountUser on allAuthenticatedUsers with condition",
+      "expected": "WEAK",
+      "got": "WEAK",
+      "score": 8,
+      "findings": [
+        "[GCP Policy] Translated from GCP IAM bindings format",
+        "[GCP Binding] role='roles/iam.serviceAccountUser' members=['allAuthenticatedUsers'] condition='request.time < timestamp('2025-12-31T00:00:00Z')'",
+        "Broad IAM resource 'arn:aws:iam::*:*' \u2014 applies to all IAM resources in account",
+        "No explicit Deny statements \u2014 consider adding Deny rules for sensitive operations",
+        "Principal '*' \u2014 allows any entity including anonymous internet users to assume this role",
+        "The policy allows assume role from any entity in us-east-1 region without MFA",
+        "The _gcp_condition is not a valid AWS condition and may cause unexpected behavior",
+        "The policy does not specify a valid AWS condition for the request time, as 'request.time' is not a valid key"
+      ],
+      "fixed_policy": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Principal": {
+              "AWS": "arn:aws:iam::123456789012:root"
+            },
+            "Action": "sts:AssumeRole",
+            "Resource": "arn:aws:iam::123456789012:role/SpecificRole",
+            "Condition": {
+              "StringEquals": {
+                "aws:RequestedRegion": "us-east-1"
+              },
+              "Bool": {
+                "aws:MultiFactorAuthPresent": "true"
+              }
+            }
+          },
+          {
+            "Effect": "Deny",
+            "Principal": "*",
+            "Action": "sts:AssumeRole",
+            "Resource": "arn:aws:iam::123456789012:role/SpecificRole",
+            "Condition": {
+              "Null": {
+                "aws:MultiFactorAuthPresent": "true"
+              }
+            }
+          },
+          {
+            "Effect": "Deny",
+            "Principal": "*",
+            "Action": "sts:AssumeRole",
+            "Resource": "arn:aws:iam::123456789012:role/SpecificRole",
+            "Condition": {
+              "StringNotEquals": {
+                "aws:RequestedRegion": "us-east-1"
+              }
+            }
+          },
+          {
+            "Effect": "Deny",
+            "Principal": "*",
+            "Action": "sts:AssumeRole",
+            "Resource": "arn:aws:iam::123456789012:role/SpecificRole",
+            "Condition": {
+              "DateLessThan": {
+                "aws:CurrentTime": "2025-12-31T00:00:00Z"
+              }
+            }
+          }
+        ]
+      },
+      "match": true,
+      "time": 1.84
+    }
+  ]
+}

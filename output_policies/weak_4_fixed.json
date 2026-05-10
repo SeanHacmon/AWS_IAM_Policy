@@ -1,0 +1,48 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::123456789012:root"
+      },
+      "Action": "sts:AssumeRole",
+      "Resource": "arn:aws:iam::123456789012:role/SpecificRole",
+      "Condition": {
+        "StringLike": {
+          "aws:sourceVpc": "vpc-12345678",
+          "aws:sourceIp": "192.0.2.0/24"
+        },
+        "Bool": {
+          "aws:MultiFactorAuthPresent": "true"
+        }
+      }
+    },
+    {
+      "Effect": "Deny",
+      "Principal": "*",
+      "Action": [
+        "iam:CreateRole",
+        "iam:DeleteRole",
+        "iam:UpdateRole"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringNotLike": {
+          "aws:sourceIp": "192.0.2.0/24"
+        }
+      }
+    },
+    {
+      "Effect": "Deny",
+      "Principal": "*",
+      "Action": "sts:AssumeRole",
+      "Resource": "arn:aws:iam::123456789012:role/SpecificRole",
+      "Condition": {
+        "Bool": {
+          "aws:MultiFactorAuthPresent": "false"
+        }
+      }
+    }
+  ]
+}

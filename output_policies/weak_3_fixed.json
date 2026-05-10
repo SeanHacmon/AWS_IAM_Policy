@@ -1,0 +1,50 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreateUser",
+        "iam:CreateAccessKey",
+        "iam:AttachUserPolicy",
+        "iam:DeletePolicy"
+      ],
+      "Resource": "arn:aws:iam::*:user/${aws:username}",
+      "Condition": {
+        "Bool": {
+          "aws:MultiFactorAuthPresent": "true"
+        },
+        "IpAddress": {
+          "aws:SourceIp": "192.0.2.0/24"
+        }
+      }
+    },
+    {
+      "Effect": "Deny",
+      "Action": [
+        "iam:CreateUser",
+        "iam:CreateAccessKey",
+        "iam:AttachUserPolicy",
+        "iam:DeletePolicy"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "Null": {
+          "aws:MultiFactorAuthPresent": "true"
+        }
+      }
+    },
+    {
+      "Effect": "Deny",
+      "Action": [
+        "iam:CreateAccessKey"
+      ],
+      "Resource": "arn:aws:iam::*:user/${aws:username}",
+      "Condition": {
+        "NumericGreaterThan": {
+          "iam:AccessKeysPerUserSelfManage": "2"
+        }
+      }
+    }
+  ]
+}

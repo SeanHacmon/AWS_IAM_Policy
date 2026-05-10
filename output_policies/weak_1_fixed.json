@@ -1,0 +1,56 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AdministrativeAccess",
+      "Effect": "Allow",
+      "Action": [
+        "iam:ListRoles",
+        "iam:ListUsers",
+        "iam:ListGroups",
+        "iam:ListPolicies",
+        "ec2:DescribeInstances",
+        "ec2:DescribeSecurityGroups",
+        "s3:ListBuckets",
+        "s3:ListObjects"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "Bool": {
+          "aws:MultiFactorAuthPresent": "true"
+        }
+      }
+    },
+    {
+      "Sid": "DenySensitiveOperations",
+      "Effect": "Deny",
+      "Action": [
+        "iam:DeleteRole",
+        "iam:DeleteUser",
+        "iam:DeleteGroup",
+        "iam:DeletePolicy",
+        "ec2:TerminateInstances",
+        "s3:DeleteBucket",
+        "s3:DeleteObject"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "IpAddress": {
+          "aws:SourceIp": "192.0.2.0/24"
+        }
+      }
+    },
+    {
+      "Sid": "DenyUnauthorizedOperations",
+      "Effect": "Deny",
+      "Action": "*",
+      "Resource": "*",
+      "Condition": {
+        "StringNotLike": {
+          "aws:PrincipalArn": "arn:aws:iam::*:user/AdminUser"
+        }
+      }
+    }
+  ],
+  "ReviewDate": "2024-12-31"
+}

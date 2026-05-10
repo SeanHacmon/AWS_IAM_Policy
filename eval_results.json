@@ -1,0 +1,402 @@
+{
+  "summary": {
+    "total": 9,
+    "correct": 9,
+    "agreement_rate": "100.0%",
+    "avg_time_seconds": 0.95,
+    "total_time_seconds": 8.59
+  },
+  "results": [
+    {
+      "policy": "policies/weak_1.json",
+      "description": "Full wildcard \u2014 Action:* Resource:*",
+      "expected": "WEAK",
+      "got": "WEAK",
+      "score": 10,
+      "findings": [
+        "Action wildcard '*' found \u2014 grants all actions on all services",
+        "Resource wildcard '*' found \u2014 applies to all AWS resources",
+        "CRITICAL: Action '*' with Resource '*' \u2014 full unrestricted access",
+        "Allow statement has no Condition block \u2014 consider adding MFA or IP restrictions",
+        "No explicit Deny statements \u2014 consider adding Deny rules for sensitive operations",
+        "Lack of principal specification",
+        "No policy expiration or review date"
+      ],
+      "fixed_policy": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Sid": "AdministrativeAccess",
+            "Effect": "Allow",
+            "Action": [
+              "iam:ListRoles",
+              "iam:ListUsers",
+              "iam:ListGroups",
+              "iam:ListPolicies",
+              "ec2:DescribeInstances",
+              "ec2:DescribeSecurityGroups",
+              "s3:ListBuckets",
+              "s3:ListObjects"
+            ],
+            "Resource": "*",
+            "Condition": {
+              "Bool": {
+                "aws:MultiFactorAuthPresent": "true"
+              }
+            }
+          },
+          {
+            "Sid": "DenySensitiveOperations",
+            "Effect": "Deny",
+            "Action": [
+              "iam:DeleteRole",
+              "iam:DeleteUser",
+              "iam:DeleteGroup",
+              "iam:DeletePolicy",
+              "ec2:TerminateInstances",
+              "s3:DeleteBucket",
+              "s3:DeleteObject"
+            ],
+            "Resource": "*",
+            "Condition": {
+              "IpAddress": {
+                "aws:SourceIp": "192.0.2.0/24"
+              }
+            }
+          },
+          {
+            "Sid": "DenyUnauthorizedOperations",
+            "Effect": "Deny",
+            "Action": "*",
+            "Resource": "*",
+            "Condition": {
+              "StringNotLike": {
+                "aws:PrincipalArn": "arn:aws:iam::*:user/AdminUser"
+              }
+            }
+          }
+        ],
+        "ReviewDate": "2024-12-31"
+      },
+      "fixed_policy_path": "output_policies/weak_1_fixed.json",
+      "match": true,
+      "time": 1.53
+    },
+    {
+      "policy": "policies/weak_2.json",
+      "description": "Service wildcard s3:* with no conditions",
+      "expected": "WEAK",
+      "got": "WEAK",
+      "score": 10,
+      "findings": [
+        "Resource wildcard '*' found \u2014 applies to all AWS resources",
+        "Allow statement has no Condition block \u2014 consider adding MFA or IP restrictions",
+        "Service wildcard 's3:*' \u2014 grants all actions for this service",
+        "No explicit Deny statements \u2014 consider adding Deny rules for sensitive operations",
+        "Overly permissive policy with no scope for resource access or action limitation",
+        "Lack of principal specification, allowing any entity to assume this policy"
+      ],
+      "fixed_policy": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Sid": "AllowS3AccessWithMFA",
+            "Effect": "Allow",
+            "Action": [
+              "s3:PutObject",
+              "s3:GetObject",
+              "s3:ListBucket"
+            ],
+            "Resource": "arn:aws:s3:::my-bucket",
+            "Condition": {
+              "Bool": {
+                "aws:MultiFactorAuthPresent": "true"
+              },
+              "IpAddress": {
+                "aws:SourceIp": "192.0.2.0/24"
+              }
+            }
+          },
+          {
+            "Sid": "DenySensitiveS3Operations",
+            "Effect": "Deny",
+            "Action": [
+              "s3:DeleteBucket",
+              "s3:DeleteObject"
+            ],
+            "Resource": "arn:aws:s3:::my-bucket",
+            "Condition": {
+              "Bool": {
+                "aws:MultiFactorAuthPresent": "false"
+              }
+            }
+          }
+        ]
+      },
+      "fixed_policy_path": "output_policies/weak_2_fixed.json",
+      "match": true,
+      "time": 1.13
+    },
+    {
+      "policy": "policies/weak_3.json",
+      "description": "Sensitive IAM actions without conditions",
+      "expected": "WEAK",
+      "got": "WEAK",
+      "score": 10,
+      "findings": [
+        "Resource wildcard '*' found \u2014 applies to all AWS resources",
+        "Allow statement has no Condition block \u2014 consider adding MFA or IP restrictions",
+        "Sensitive action 'iam:CreateUser' without conditions (privilege escalation)",
+        "Sensitive action 'iam:CreateAccessKey' without conditions (credential theft)",
+        "Sensitive action 'iam:AttachUserPolicy' without conditions (privilege escalation)",
+        "Sensitive action 'iam:DeletePolicy' without conditions (policy destruction)",
+        "No explicit Deny statements \u2014 consider adding Deny rules for sensitive operations",
+        "Potential for unlimited access key creation",
+        "Lack of resource ownership or tagging restrictions"
+      ],
+      "fixed_policy": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": [
+              "iam:CreateUser",
+              "iam:CreateAccessKey",
+              "iam:AttachUserPolicy",
+              "iam:DeletePolicy"
+            ],
+            "Resource": "arn:aws:iam::*:user/${aws:username}",
+            "Condition": {
+              "Bool": {
+                "aws:MultiFactorAuthPresent": "true"
+              },
+              "IpAddress": {
+                "aws:SourceIp": "192.0.2.0/24"
+              }
+            }
+          },
+          {
+            "Effect": "Deny",
+            "Action": [
+              "iam:CreateUser",
+              "iam:CreateAccessKey",
+              "iam:AttachUserPolicy",
+              "iam:DeletePolicy"
+            ],
+            "Resource": "*",
+            "Condition": {
+              "Null": {
+                "aws:MultiFactorAuthPresent": "true"
+              }
+            }
+          },
+          {
+            "Effect": "Deny",
+            "Action": [
+              "iam:CreateAccessKey"
+            ],
+            "Resource": "arn:aws:iam::*:user/${aws:username}",
+            "Condition": {
+              "NumericGreaterThan": {
+                "iam:AccessKeysPerUserSelfManage": "2"
+              }
+            }
+          }
+        ]
+      },
+      "fixed_policy_path": "output_policies/weak_3_fixed.json",
+      "match": true,
+      "time": 1.43
+    },
+    {
+      "policy": "policies/weak_4.json",
+      "description": "Wildcard principal on AssumeRole",
+      "expected": "WEAK",
+      "got": "WEAK",
+      "score": 10,
+      "findings": [
+        "Resource wildcard '*' found \u2014 applies to all AWS resources",
+        "Allow statement has no Condition block \u2014 consider adding MFA or IP restrictions",
+        "Sensitive action 'sts:AssumeRole' without conditions (role hijacking)",
+        "No explicit Deny statements \u2014 consider adding Deny rules for sensitive operations",
+        "Principal '*' \u2014 allows any entity including anonymous internet users to assume this role",
+        "Potential for privilege escalation due to unrestricted assume role capability",
+        "Lack of auditing and logging mechanisms to monitor assumed role activity"
+      ],
+      "fixed_policy": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Principal": {
+              "AWS": "arn:aws:iam::123456789012:root"
+            },
+            "Action": "sts:AssumeRole",
+            "Resource": "arn:aws:iam::123456789012:role/SpecificRole",
+            "Condition": {
+              "StringLike": {
+                "aws:sourceVpc": "vpc-12345678",
+                "aws:sourceIp": "192.0.2.0/24"
+              },
+              "Bool": {
+                "aws:MultiFactorAuthPresent": "true"
+              }
+            }
+          },
+          {
+            "Effect": "Deny",
+            "Principal": "*",
+            "Action": [
+              "iam:CreateRole",
+              "iam:DeleteRole",
+              "iam:UpdateRole"
+            ],
+            "Resource": "*",
+            "Condition": {
+              "StringNotLike": {
+                "aws:sourceIp": "192.0.2.0/24"
+              }
+            }
+          },
+          {
+            "Effect": "Deny",
+            "Principal": "*",
+            "Action": "sts:AssumeRole",
+            "Resource": "arn:aws:iam::123456789012:role/SpecificRole",
+            "Condition": {
+              "Bool": {
+                "aws:MultiFactorAuthPresent": "false"
+              }
+            }
+          }
+        ]
+      },
+      "fixed_policy_path": "output_policies/weak_4_fixed.json",
+      "match": true,
+      "time": 1.38
+    },
+    {
+      "policy": "policies/strong_1.json",
+      "description": "Read-only S3 with MFA and explicit Deny",
+      "expected": "STRONG",
+      "got": "STRONG",
+      "score": 1,
+      "findings": [
+        "Broad resource pattern 'arn:aws:s3:::my-company-bucket/*' \u2014 consider restricting to specific resources",
+        "Potential over-privilege with s3:ListBucket action",
+        "No explicit restriction on IP address or location for access to the S3 bucket"
+      ],
+      "fixed_policy": null,
+      "fixed_policy_path": null,
+      "match": true,
+      "time": 0.38
+    },
+    {
+      "policy": "policies/strong_2.json",
+      "description": "Specific EC2 actions with IP condition",
+      "expected": "STRONG",
+      "got": "STRONG",
+      "score": 1,
+      "findings": [
+        "Broad resource pattern 'arn:aws:ec2:us-east-1:123456789012:instance/*' \u2014 consider restricting to specific resources",
+        "The policy allows ec2:StartInstances and ec2:StopInstances actions without restricting the instance types or sizes, which could lead to unintended costs.",
+        "The deny statement does not specify a condition for the source IP, which could allow termination or deletion of resources from any IP address if the deny statement is not evaluated as expected."
+      ],
+      "fixed_policy": null,
+      "fixed_policy_path": null,
+      "match": true,
+      "time": 0.59
+    },
+    {
+      "policy": "policies/strong_3.json",
+      "description": "Least privilege Lambda execution role",
+      "expected": "STRONG",
+      "got": "STRONG",
+      "score": 4,
+      "findings": [
+        "Allow statement has no Condition block \u2014 consider adding MFA or IP restrictions",
+        "Broad resource pattern 'arn:aws:logs:us-east-1:123456789012:log-group:/aws/lambda/my-function:*' \u2014 consider restricting to specific resources",
+        "Broad resource pattern 'arn:aws:s3:::my-input-bucket/*' \u2014 consider restricting to specific resources",
+        "The policy allows logs:CreateLogGroup, logs:CreateLogStream, and logs:PutLogEvents actions without any condition to restrict the log group or stream name",
+        "The deny statement for S3 actions only denies access when the requested region is not us-east-1, but does not restrict access to specific S3 actions or resources within the us-east-1 region"
+      ],
+      "fixed_policy": null,
+      "fixed_policy_path": null,
+      "match": true,
+      "time": 0.53
+    },
+    {
+      "policy": "policies/edge_1.json",
+      "description": "Service wildcard with conditions (borderline)",
+      "expected": "WEAK",
+      "got": "WEAK",
+      "score": 5,
+      "findings": [
+        "Service wildcard 's3:*' \u2014 grants all actions for this service",
+        "Broad resource pattern 'arn:aws:s3:::my-specific-bucket/*' \u2014 consider restricting to specific resources",
+        "No explicit Deny statements \u2014 consider adding Deny rules for sensitive operations",
+        "The IP address range '10.0.0.0/8' is too broad and could allow access from unintended sources",
+        "The policy relies on the 'aws:MultiFactorAuthPresent' condition, but does not specify which MFA method is required"
+      ],
+      "fixed_policy": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": [
+              "s3:GetObject",
+              "s3:PutObject",
+              "s3:DeleteObject"
+            ],
+            "Resource": "arn:aws:s3:::my-specific-bucket/documents/*",
+            "Condition": {
+              "Bool": {
+                "aws:MultiFactorAuthPresent": "true"
+              },
+              "StringEquals": {
+                "aws:MultiFactorAuthAge": "3600"
+              },
+              "IpAddress": {
+                "aws:SourceIp": "10.1.1.0/24"
+              }
+            }
+          },
+          {
+            "Effect": "Deny",
+            "Action": [
+              "s3:DeleteBucket",
+              "s3:PutBucketPolicy",
+              "s3:PutBucketAcl"
+            ],
+            "Resource": "arn:aws:s3:::my-specific-bucket",
+            "Condition": {
+              "Bool": {
+                "aws:MultiFactorAuthPresent": "false"
+              }
+            }
+          }
+        ]
+      },
+      "fixed_policy_path": "output_policies/edge_1_fixed.json",
+      "match": true,
+      "time": 1.21
+    },
+    {
+      "policy": "policies/score_3.json",
+      "description": "Specific S3 actions no conditions \u2014 score 3",
+      "expected": "STRONG",
+      "got": "STRONG",
+      "score": 3,
+      "findings": [
+        "Allow statement has no Condition block \u2014 consider adding MFA or IP restrictions",
+        "No explicit Deny statements \u2014 consider adding Deny rules for sensitive operations",
+        "The policy allows listing of the bucket which may potentially expose object names",
+        "No bucket policy or ACLs are considered in this evaluation"
+      ],
+      "fixed_policy": null,
+      "fixed_policy_path": null,
+      "match": true,
+      "time": 0.41
+    }
+  ]
+}

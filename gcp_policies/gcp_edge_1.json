@@ -1,0 +1,14 @@
+{
+    "bindings": [
+        {
+            "role": "roles/iam.serviceAccountUser",
+            "members": ["allAuthenticatedUsers"],
+            "condition": {
+                "title": "Expiry",
+                "expression": "request.time < timestamp('2025-12-31T00:00:00Z')"
+            }
+        }
+    ],
+    "etag": "BwXedge1",
+    "version": 3
+}

@@ -1,0 +1,14 @@
+{
+    "bindings": [
+        {
+            "role": "roles/storage.objectViewer",
+            "members": ["user:alice@example.com"],
+            "condition": {
+                "title": "ProjectOnly",
+                "expression": "resource.name.startsWith('projects/my-project')"
+            }
+        }
+    ],
+    "etag": "BwXstrong1",
+    "version": 3
+}

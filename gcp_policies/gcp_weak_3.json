@@ -1,0 +1,10 @@
+{
+    "bindings": [
+        {
+            "role": "roles/storage.admin",
+            "members": ["allUsers"]
+        }
+    ],
+    "etag": "BwXxyz789",
+    "version": 1
+}

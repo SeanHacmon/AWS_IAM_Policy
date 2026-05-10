@@ -1,0 +1,10 @@
+{
+    "bindings": [
+        {
+            "role": "roles/pubsub.subscriber",
+            "members": ["serviceAccount:my-app@my-project.iam.gserviceaccount.com"]
+        }
+    ],
+    "etag": "BwXstrong2",
+    "version": 1
+}
